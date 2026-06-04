@@ -1805,9 +1805,6 @@ function writeEvidenceExportAtomic(fullPath, fileContents, projectRoot) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       throw new Error("export_temporary_source_verification_failed");
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const targetRechecked = inspectPathEntry(fullPath);
     const pathSafetyRechecked = inspectTargetPathSafety(fullPath, projectRoot);
     if (
@@ -1834,6 +1831,7 @@ function writeEvidenceExportAtomic(fullPath, fileContents, projectRoot) {
     const publishedSource = inspectPathEntry(tempPath);
     const written = inspectPathEntry(fullPath);
     const pathSafetyAfter = inspectTargetPathSafety(fullPath, projectRoot, { targetMustExist: true });
+    const openedTempStats = fs.fstatSync(fileDescriptor);
     const targetIdentityVerified = Boolean(
       publishedSource.status === "safe_to_execute"
       && publishedSource.exists
@@ -1842,8 +1840,8 @@ function writeEvidenceExportAtomic(fullPath, fileContents, projectRoot) {
       && written.status === "safe_to_execute"
       && written.exists
       && written.stats
-      && sameFileIdentity(createdTempStats, publishedSource.stats)
-      && sameFileIdentity(createdTempStats, written.stats)
+      && sameFileIdentity(openedTempStats, publishedSource.stats)
+      && sameFileIdentity(openedTempStats, written.stats)
     );
     if (
       written.status !== "safe_to_execute"

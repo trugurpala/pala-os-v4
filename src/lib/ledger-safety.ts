@@ -175,9 +175,6 @@ function atomicCreateBackup(plan, backupRoot, bounded) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       return { status: "manual_verification_required", blocker: "ledger_repair_backup_create_failed", backup_identity_verified: false, writes_performed: true };
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const recheckedTarget = inspectRepoPath(backupRelative, { projectRoot: bounded.projectRoot, expectedKind: "file" });
     if (recheckedTarget.status !== "safe_to_execute" || recheckedTarget.exists) {
       return { status: "manual_verification_required", blocker: "ledger_repair_backup_target_changed_before_publish", backup_identity_verified: false, writes_performed: true };
@@ -186,10 +183,11 @@ function atomicCreateBackup(plan, backupRoot, bounded) {
     const written = inspectRepoPath(backupRelative, { projectRoot: bounded.projectRoot, expectedKind: "file" });
     let backupIdentityVerified = false;
     try {
+      const openedTempStats = fs.fstatSync(fileDescriptor);
       const backupStats = fs.lstatSync(backupPath);
       backupIdentityVerified = backupStats.isFile()
         && !backupStats.isSymbolicLink()
-        && sameFileIdentity(createdTempStats, backupStats);
+        && sameFileIdentity(openedTempStats, backupStats);
     } catch {
       backupIdentityVerified = false;
     }
@@ -258,9 +256,6 @@ function atomicReplaceLedger(plan, bounded) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       return { status: "manual_verification_required", blocker: "ledger_repair_atomic_replace_failed", replacement_identity_verified: false, writes_performed: true };
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const rechecked = readBoundedLedgerFile(plan.fullPath, bounded);
     if (rechecked.status !== "safe_to_execute" || rechecked.text !== plan.original) {
       return { status: "manual_verification_required", blocker: "ledger_repair_target_changed_before_replace", replacement_identity_verified: false, writes_performed: true };
@@ -269,7 +264,7 @@ function atomicReplaceLedger(plan, bounded) {
     if (
       !replaceSourceStats.isFile()
       || replaceSourceStats.isSymbolicLink()
-      || !sameFileIdentity(createdTempStats, replaceSourceStats)
+      || !sameFileIdentity(fs.fstatSync(fileDescriptor), replaceSourceStats)
     ) {
       return { status: "manual_verification_required", blocker: "ledger_repair_atomic_replace_failed", replacement_identity_verified: false, writes_performed: true };
     }
@@ -278,10 +273,11 @@ function atomicReplaceLedger(plan, bounded) {
     const written = inspectRepoPath(plan.relativePath, { projectRoot: bounded.projectRoot, expectedKind: "file" });
     let replacementIdentityVerified = false;
     try {
+      const openedTempStats = fs.fstatSync(fileDescriptor);
       const liveLedgerStats = fs.lstatSync(plan.fullPath);
       replacementIdentityVerified = liveLedgerStats.isFile()
         && !liveLedgerStats.isSymbolicLink()
-        && sameFileIdentity(createdTempStats, liveLedgerStats);
+        && sameFileIdentity(openedTempStats, liveLedgerStats);
     } catch {
       replacementIdentityVerified = false;
     }

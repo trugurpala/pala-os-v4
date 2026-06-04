@@ -409,9 +409,10 @@ export function writeBoundedStateJson(filePath, value, options = {}) {
         writes_performed: true
       });
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
+    if (process.platform === "win32") {
+      fs.closeSync(fileDescriptor);
+      fileDescriptor = undefined;
+    }
     while (atomicReplaceAttemptCount < STATE_FILE_IO_CONTRACT.max_atomic_replace_attempts) {
       const rechecked = inspectStateTarget(bounded);
       if (rechecked.status !== "safe_to_execute") {
@@ -421,7 +422,8 @@ export function writeBoundedStateJson(filePath, value, options = {}) {
           atomic_replace_retry_count: atomicReplaceRetryCount
         });
       }
-      if (!pathMatchesFileIdentity(tempPath, createdTempStats)) {
+      const expectedTempStats = fileDescriptor === undefined ? createdTempStats : fs.fstatSync(fileDescriptor);
+      if (!pathMatchesFileIdentity(tempPath, expectedTempStats)) {
         return failedWrite(bounded, ["state_write_temporary_source_changed"], {
           writes_performed: true,
           atomic_replace_attempt_count: atomicReplaceAttemptCount,

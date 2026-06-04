@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - run: npm run pala -- benchmark-refresh --dry-run
       - run: npm run check
       - run: npm run pala -- admin-check --strict
       - run: npm run pala -- worker-check --strict

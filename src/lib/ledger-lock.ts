@@ -73,19 +73,19 @@ function acquireLedgerMutationLock(projectRoot, ledgerDir) {
       }
       return { fileDescriptor, lockPath, openedStats, attempt };
     } catch (error) {
-      if (fileDescriptor !== undefined) {
-        try {
-          fs.closeSync(fileDescriptor);
-        } catch {
-          // The fixed lock remains fail-closed if descriptor cleanup fails.
-        }
-      }
       if (openedStats) {
         try {
           const currentStats = fs.statSync(lockPath);
           if (sameFileIdentity(openedStats, currentStats)) fs.unlinkSync(lockPath);
         } catch {
           // A changed or unremovable lock remains fail-closed.
+        }
+      }
+      if (fileDescriptor !== undefined) {
+        try {
+          fs.closeSync(fileDescriptor);
+        } catch {
+          // The fixed lock remains fail-closed if descriptor cleanup fails.
         }
       }
       if (String(error?.message || "").startsWith("ledger_mutation_lock_blocked:")) {
@@ -122,16 +122,22 @@ function releaseLedgerMutationLock(projectRoot, ledgerDir, lock) {
     }
     throw new Error("ledger_mutation_lock_blocked:changed_before_release");
   }
+  let releaseError;
+  try {
+    fs.unlinkSync(lock.lockPath);
+    const afterRelease = inspectLedgerMutationLock(projectRoot, ledgerDir);
+    if (afterRelease.exists) {
+      releaseError = new Error("ledger_mutation_lock_blocked:release_failed");
+    }
+  } catch {
+    releaseError = new Error("ledger_mutation_lock_blocked:release_failed");
+  }
   try {
     fs.closeSync(lock.fileDescriptor);
-    fs.unlinkSync(lock.lockPath);
   } catch {
-    throw new Error("ledger_mutation_lock_blocked:release_failed");
+    releaseError = new Error("ledger_mutation_lock_blocked:release_failed");
   }
-  const afterRelease = inspectLedgerMutationLock(projectRoot, ledgerDir);
-  if (afterRelease.exists) {
-    throw new Error("ledger_mutation_lock_blocked:release_failed");
-  }
+  if (releaseError) throw releaseError;
 }
 
 export function withLedgerMutationLock(options, operation) {

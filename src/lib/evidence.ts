@@ -196,9 +196,6 @@ export function writeEvidence(kind, payload, options = {}) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       throw new Error("raw_evidence_write_blocked:temporary_source_verification_failed");
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const recheckedParent = inspectRepoPath(".pala/evidence/raw", { projectRoot, expectedKind: "directory" });
     const recheckedTarget = inspectRepoPath(relativePath, { projectRoot, expectedKind: "file" });
     if (
@@ -213,14 +210,15 @@ export function writeEvidence(kind, payload, options = {}) {
     const written = inspectRepoPath(relativePath, { projectRoot, expectedKind: "file" });
     let targetIdentityVerified = false;
     try {
+      const openedTempStats = fs.fstatSync(fileDescriptor);
       const publishedSourceStats = fs.lstatSync(tempPath);
       const targetStats = fs.lstatSync(fullPath);
       targetIdentityVerified = publishedSourceStats.isFile()
         && !publishedSourceStats.isSymbolicLink()
         && targetStats.isFile()
         && !targetStats.isSymbolicLink()
-        && sameFileIdentity(createdTempStats, publishedSourceStats)
-        && sameFileIdentity(createdTempStats, targetStats);
+        && sameFileIdentity(openedTempStats, publishedSourceStats)
+        && sameFileIdentity(openedTempStats, targetStats);
     } catch {
       targetIdentityVerified = false;
     }
@@ -294,16 +292,18 @@ export function writePublicEvidence(fileName, markdown, options = {}) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       throw new Error("public_evidence_write_blocked:temporary_source_verification_failed");
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
+    if (process.platform === "win32") {
+      fs.closeSync(fileDescriptor);
+      fileDescriptor = undefined;
+    }
     while (atomicReplaceAttemptCount < PUBLIC_EVIDENCE_WRITE_CONTRACT.max_atomic_replace_attempts) {
       const recheckedParent = inspectRepoPath("docs/evidence", { projectRoot, expectedKind: "directory" });
       const recheckedTarget = inspectRepoPath(relativePath, { projectRoot, expectedKind: "file" });
       if (recheckedParent.status !== "safe_to_execute" || recheckedParent.exists !== true || recheckedTarget.status !== "safe_to_execute") {
         throw new Error("public_evidence_write_blocked:path_changed_before_replace");
       }
-      if (!pathMatchesFileIdentity(tempPath, createdTempStats)) {
+      const expectedTempStats = fileDescriptor === undefined ? createdTempStats : fs.fstatSync(fileDescriptor);
+      if (!pathMatchesFileIdentity(tempPath, expectedTempStats)) {
         throw new Error("public_evidence_write_blocked:temporary_source_changed");
       }
       atomicReplaceAttemptCount += 1;

@@ -373,9 +373,6 @@ function createKernelFileIfMissing(projectRoot, initializedFile) {
     if (!createdTempStats.isFile() || createdTempStats.size !== bytes) {
       return { status: "manual_verification_required", path: initializedFile.path, blocker: "kernel_bootstrap_file_create_failed", created: false, existing: false, bytes_written: 0, writes_performed: true };
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const recheckedTarget = inspectRepoPath(initializedFile.path, { projectRoot, expectedKind: "file" });
     const recheckedParent = inspectRepoPath(path.dirname(initializedFile.path), { projectRoot, expectedKind: "directory" });
     if (recheckedTarget.status !== "safe_to_execute" || recheckedParent.status !== "safe_to_execute" || recheckedParent.exists !== true) {
@@ -389,14 +386,15 @@ function createKernelFileIfMissing(projectRoot, initializedFile) {
     const written = inspectRepoPath(initializedFile.path, { projectRoot, expectedKind: "file" });
     let initializedFileIdentityVerified = false;
     try {
+      const openedTempStats = fs.fstatSync(fileDescriptor);
       const publishedSourceStats = fs.lstatSync(tempPath);
       const initializedFileStats = fs.lstatSync(fullPath);
       initializedFileIdentityVerified = publishedSourceStats.isFile()
         && !publishedSourceStats.isSymbolicLink()
         && initializedFileStats.isFile()
         && !initializedFileStats.isSymbolicLink()
-        && sameFileIdentity(createdTempStats, publishedSourceStats)
-        && sameFileIdentity(createdTempStats, initializedFileStats);
+        && sameFileIdentity(openedTempStats, publishedSourceStats)
+        && sameFileIdentity(openedTempStats, initializedFileStats);
     } catch {
       initializedFileIdentityVerified = false;
     }

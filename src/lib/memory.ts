@@ -414,19 +414,19 @@ function acquireMemoryRegistryWriteLock(projectRoot) {
       }
       return { fileDescriptor, lockPath, openedStats, attempt };
     } catch (error) {
-      if (fileDescriptor !== undefined) {
-        try {
-          fs.closeSync(fileDescriptor);
-        } catch {
-          // The fixed lock remains fail-closed if descriptor cleanup fails.
-        }
-      }
       if (openedStats) {
         try {
           const currentStats = fs.statSync(lockPath);
           if (sameFileIdentity(openedStats, currentStats)) fs.unlinkSync(lockPath);
         } catch {
           // A changed or unremovable lock remains fail-closed.
+        }
+      }
+      if (fileDescriptor !== undefined) {
+        try {
+          fs.closeSync(fileDescriptor);
+        } catch {
+          // The fixed lock remains fail-closed if descriptor cleanup fails.
         }
       }
       if (String(error?.message || "").startsWith("memory_registry_append_blocked:")) {
@@ -492,13 +492,19 @@ function releaseMemoryRegistryWriteLock(projectRoot, lock) {
     }
     throw new Error("memory_registry_append_blocked:write_lock_changed_before_release");
   }
+  let releaseError;
+  try {
+    fs.unlinkSync(lock.lockPath);
+    confirmMemoryRegistryWriteLockReleased(projectRoot, lock);
+  } catch {
+    releaseError = new Error("memory_registry_append_blocked:write_lock_release_failed");
+  }
   try {
     fs.closeSync(lock.fileDescriptor);
-    fs.unlinkSync(lock.lockPath);
   } catch {
-    throw new Error("memory_registry_append_blocked:write_lock_release_failed");
+    releaseError = new Error("memory_registry_append_blocked:write_lock_release_failed");
   }
-  confirmMemoryRegistryWriteLockReleased(projectRoot, lock);
+  if (releaseError) throw releaseError;
 }
 
 function withMemoryRegistryWriteLock(projectRoot, operation) {
@@ -542,9 +548,6 @@ function createMemoryRegistry(projectRoot, registryPath, buffer) {
     if (!createdTempStats.isFile() || createdTempStats.size !== buffer.byteLength) {
       throw new Error("memory_registry_append_blocked:create_failed");
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
     const rechecked = inspectMemoryRegistryAppendTarget(projectRoot);
     if (rechecked.exists) {
       throw new Error("memory_registry_append_blocked:target_appeared_before_create");
@@ -553,14 +556,15 @@ function createMemoryRegistry(projectRoot, registryPath, buffer) {
     const written = inspectMemoryRegistryAppendTarget(projectRoot);
     let registryIdentityVerified = false;
     try {
+      const openedTempStats = fs.fstatSync(fileDescriptor);
       const publishedSourceStats = fs.lstatSync(tempPath);
       const registryStats = fs.lstatSync(registryPath);
       registryIdentityVerified = publishedSourceStats.isFile()
         && !publishedSourceStats.isSymbolicLink()
         && registryStats.isFile()
         && !registryStats.isSymbolicLink()
-        && sameFileIdentity(createdTempStats, publishedSourceStats)
-        && sameFileIdentity(createdTempStats, registryStats);
+        && sameFileIdentity(openedTempStats, publishedSourceStats)
+        && sameFileIdentity(openedTempStats, registryStats);
     } catch {
       registryIdentityVerified = false;
     }

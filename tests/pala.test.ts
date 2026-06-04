@@ -6367,7 +6367,7 @@ test("strict CLI mode returns nonzero unless command acceptance is PASS", async 
   assert.equal(admin.code, 0, admin.stderr);
   assert.equal(JSON.parse(admin.stdout).detection.output_valid, true);
 
-  const partial = await runCli(["sync-check", "--strict"]);
+  const partial = await runCli(["benchmark-refresh", "--dry-run", "--strict"]);
   assert.equal(partial.code, 1);
   const output = JSON.parse(partial.stdout);
   assert.equal(output.strict, true);

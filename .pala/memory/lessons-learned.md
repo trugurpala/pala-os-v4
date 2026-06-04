@@ -19,3 +19,10 @@ Pala OS is not a coding agent. It is the local control/evidence layer that makes
 ### Dashboard does not invent truth
 
 Dashboard pages read DB/state/ledger/evidence. Missing evidence means Unknown, Not checked, Partial, Blocked, or Manual verification required.
+
+### Temporary file identity must survive inode reuse
+
+Linux may immediately reuse an inode after unlink, so a temporary file descriptor
+must remain open through create-only publication and POSIX atomic-replace retries.
+On Windows, close it before competing atomic renames to preserve last-writer
+concurrency, then keep the same identity checks and bounded retry policy.

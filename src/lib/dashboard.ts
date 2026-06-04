@@ -674,9 +674,10 @@ function writeAtomicDashboardFile(output, projectRoot) {
         writes_performed: true
       };
     }
-    fs.closeSync(fileDescriptor);
-    fileDescriptor = undefined;
-
+    if (process.platform === "win32") {
+      fs.closeSync(fileDescriptor);
+      fileDescriptor = undefined;
+    }
     while (atomicReplaceAttemptCount < DASHBOARD_GENERATION_CONTRACT.max_atomic_replace_attempts) {
       const recheckedParent = inspectDashboardPath(relativeParent, projectRoot, "directory");
       const recheckedTarget = inspectDashboardPath(output.path, projectRoot, "file");
@@ -698,7 +699,8 @@ function writeAtomicDashboardFile(output, projectRoot) {
           writes_performed: true
         };
       }
-      if (!pathMatchesFileIdentity(tempPath, createdTempStats)) {
+      const expectedTempStats = fileDescriptor === undefined ? createdTempStats : fs.fstatSync(fileDescriptor);
+      if (!pathMatchesFileIdentity(tempPath, expectedTempStats)) {
         return {
           status: "manual_verification_required",
           path: output.path,

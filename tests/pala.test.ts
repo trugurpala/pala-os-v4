@@ -1518,6 +1518,35 @@ test("ledger append waits for explicit repair instead of being lost at atomic re
   assert.equal(LEDGER_MUTATION_LOCK_CONTRACT.policy, "bounded_fixed_create_only_lock_serialized_ledger_mutations");
 });
 
+test("ledger mutation lock accepts a safe successor after release", () => {
+  const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pala-ledger-lock-successor-"));
+  ensureKernel({ projectRoot });
+  const lockPath = path.join(projectRoot, ".pala", "ledger", ".ledger-mutation.write-lock");
+  const originalUnlinkSync = fs.unlinkSync;
+  let successorInjected = false;
+  fs.unlinkSync = (...args) => {
+    originalUnlinkSync(...args);
+    if (path.resolve(String(args[0])) === path.resolve(lockPath) && !successorInjected) {
+      fs.writeFileSync(lockPath, "successor", "utf8");
+      successorInjected = true;
+    }
+  };
+  try {
+    assert.doesNotThrow(() => appendLedger(
+      "events",
+      { event: "before-safe-successor" },
+      { projectRoot }
+    ));
+  } finally {
+    fs.unlinkSync = originalUnlinkSync;
+  }
+
+  assert.equal(successorInjected, true);
+  assert.equal(fs.existsSync(lockPath), true);
+  fs.unlinkSync(lockPath);
+  assert.equal(LEDGER_MUTATION_LOCK_CONTRACT.post_release_success_policy, "released_identity_absent_or_safe_successor");
+});
+
 test("latest evidence uses bounded inventory and single-handle prefix reads with explicit exactness", () => {
   const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), "pala-latest-evidence-"));
   const rawEvidenceDir = path.join(projectRoot, ".pala", "evidence", "raw");

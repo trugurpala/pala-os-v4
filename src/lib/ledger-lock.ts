@@ -14,6 +14,7 @@ export const LEDGER_MUTATION_LOCK_CONTRACT = Object.freeze({
   lock_retry_delay_ms: 5,
   max_lock_retry_delay_ms: 25,
   path_metadata_policy: "realpath_contained_symlink_free_path_metadata_only",
+  post_release_success_policy: "released_identity_absent_or_safe_successor",
   stale_lock_reclamation_allowed: false,
   payload_exposed_on_failure: false,
   writes_outside_ledger_dir_allowed: false
@@ -44,6 +45,24 @@ function waitForLedgerMutationLock(attempt) {
     LEDGER_MUTATION_LOCK_CONTRACT.lock_retry_delay_ms * attempt
   );
   Atomics.wait(LEDGER_MUTATION_LOCK_WAIT_ARRAY, 0, 0, delay);
+}
+
+function confirmLedgerMutationLockReleased(projectRoot, ledgerDir, lock) {
+  const afterRelease = inspectLedgerMutationLock(projectRoot, ledgerDir);
+  if (!afterRelease.exists) return;
+  try {
+    const currentStats = fs.lstatSync(lock.lockPath);
+    if (
+      !currentStats.isFile()
+      || currentStats.isSymbolicLink()
+      || sameFileIdentity(lock.openedStats, currentStats)
+    ) {
+      throw new Error("ledger_mutation_lock_blocked:release_failed");
+    }
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw new Error("ledger_mutation_lock_blocked:release_failed");
+  }
 }
 
 function acquireLedgerMutationLock(projectRoot, ledgerDir) {
@@ -125,10 +144,7 @@ function releaseLedgerMutationLock(projectRoot, ledgerDir, lock) {
   let releaseError;
   try {
     fs.unlinkSync(lock.lockPath);
-    const afterRelease = inspectLedgerMutationLock(projectRoot, ledgerDir);
-    if (afterRelease.exists) {
-      releaseError = new Error("ledger_mutation_lock_blocked:release_failed");
-    }
+    confirmLedgerMutationLockReleased(projectRoot, ledgerDir, lock);
   } catch {
     releaseError = new Error("ledger_mutation_lock_blocked:release_failed");
   }

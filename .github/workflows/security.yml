@@ -1,0 +1,23 @@
+name: security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  local-security-gates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm run pala -- workflow-check --strict
+      - run: npm run pala -- docs-honesty-check --strict
+      - run: npm run pala -- public-readiness-check --strict
+      - run: npm run pala -- ledger-safety-check --strict
+      - run: npm run pala -- evidence schema-check --strict
+      - run: npm run pala -- quality-radar --strict

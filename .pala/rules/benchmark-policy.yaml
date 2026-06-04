@@ -1,0 +1,68 @@
+required_reference_categories:
+  ai_coding_agents:
+    min_sources: 2
+    preferred_sources:
+      - OpenCode
+      - OpenHands
+      - WrongStack
+  mcp_installer:
+    min_sources: 2
+    preferred_sources:
+      - Context7
+      - Claude Code official MCP docs
+      - Cursor official MCP docs
+  local_control_tower:
+    min_sources: 2
+    preferred_sources:
+      - Backstage
+      - OpenHands Local GUI
+      - GitHub Agent HQ when available
+  token_economy:
+    min_sources: 2
+    preferred_sources:
+      - Langfuse
+      - Helicone
+      - current OSS equivalent
+  backtesting:
+    min_sources: 2
+    preferred_sources:
+      - vectorbt
+      - backtesting.py
+      - backtrader
+  public_github_readiness:
+    min_sources: 2
+    preferred_sources:
+      - OpenSSF Scorecard
+      - GitHub Community Profile docs
+      - GitHub Security Advisories docs
+  ui_ux_skill_systems:
+    min_sources: 2
+    preferred_sources:
+      - nextlevelbuilder/ui-ux-pro-max-skill
+      - shadcn/ui
+      - Material Design
+      - Apple Human Interface Guidelines
+
+freshness_policy:
+  fast_changing_tools_days: 30
+  stable_docs_days: 90
+  stale_blocks_pass: true
+
+rules:
+  - no_current_source_no_decision
+  - no_benchmark_no_standard
+  - no_reference_dashboard_no_pass
+  - no_copying_competitor_code
+  - no_better_than_claim_without_evidence
+
+
+positioning_and_market_category:
+  min_sources: 2
+  preferred_sources:
+    - Claude Code official docs
+    - OpenCode
+    - OpenHands
+    - WrongStack
+    - Backstage
+  rule: "Pala OS is a control/evidence layer, not a generic coding agent."
+  stale_blocks_pass: true

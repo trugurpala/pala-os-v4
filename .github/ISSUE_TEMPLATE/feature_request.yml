@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest an evidence-backed improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should Pala OS verify or control?
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and Evidence
+      description: What evidence should prove the feature works?
+    validations:
+      required: true

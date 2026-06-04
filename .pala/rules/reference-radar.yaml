@@ -1,0 +1,56 @@
+version: 1
+purpose: "Keep Pala OS current by learning from strong projects without copying them."
+positioning: "Pala OS is not a coding agent; it is a local control/evidence layer above coding agents."
+copy_policy:
+  - "Do not copy competitor code."
+  - "Do not copy branding, README copy, UX copy, or package names."
+  - "Extract lessons only as benchmark observations."
+  - "No better-than claim without evidence."
+  - "If references are stale, status must be stale_recheck_required."
+reference_categories:
+  ai_coding_agents:
+    lesson: "Understand what real coding agents provide so Pala does not pretend to replace them."
+    examples:
+      - OpenHands
+      - OpenCode
+      - WrongStack
+    pala_decision: "Pala integrates above agents as control/evidence layer."
+  developer_portal_control_tower:
+    lesson: "Catalog, ownership, metadata, and platform visibility matter."
+    examples:
+      - Backstage
+    pala_decision: "Pala dashboard acts as local developer control tower."
+  token_economy:
+    lesson: "Token/cost tracking must separate exact and estimated usage."
+    examples:
+      - Langfuse
+      - Helicone_or_current_OSS_equivalent
+    pala_decision: "Pala uses local token ledger with confidence levels."
+  mcp_installer:
+    lesson: "Config scopes and client-specific mechanics must be verified from official sources."
+    examples:
+      - Claude_Code_official_MCP_docs
+      - Cursor_official_docs
+      - Context7
+    pala_decision: "Pala setup must be dry-run, backup-aware, and preserve existing servers."
+  public_github_readiness:
+    lesson: "Good public repos need security, contribution, license, and quality signals."
+    examples:
+      - OpenSSF_Scorecard
+      - GitHub_Community_Profile
+      - GitHub_Security_Advisories
+    pala_decision: "Pala release gate checks community and security files."
+  backtesting:
+    lesson: "Trading/Pine product claims need realistic backtesting boundaries and disclaimers."
+    examples:
+      - vectorbt
+      - backtesting.py
+      - backtrader
+    pala_decision: "Pala backtest gate blocks unsupported performance claims."
+minimum_sources_per_claim: 2
+commands:
+  - pala reference-refresh
+  - pala benchmark-refresh --dry-run
+  - pala reference-check
+  - pala competitor-lessons
+  - pala benchmark-check

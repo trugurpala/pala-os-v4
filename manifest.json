@@ -1,0 +1,15 @@
+{
+  "name": "pala-os-community-session-pack-v28-claude-code-limits-memory-web-researched",
+  "version": "v28",
+  "positioning": "Pala OS is not a coding agent. Agent does the work. Pala OS verifies the work.",
+  "primary_prompt": "00-CLAUDE-CODE-A-YAPISTIR-TEK-METIN.md",
+  "opus_max_prompt": "00-CLAUDE-CODE-OPUS-4-8-MAX-CODE-BOLUMUNE-YAPISTIR.md",
+  "core_additions": [
+    "Claude Code limits policy",
+    "Opus/model/effort token policy",
+    "Local DB + ledger memory contract",
+    "Reference radar from current sources",
+    "Vibe coder console usage flow",
+    "Hooks/skills/subagents safe integration"
+  ]
+}

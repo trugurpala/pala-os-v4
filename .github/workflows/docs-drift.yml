@@ -1,0 +1,22 @@
+name: docs-drift
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm run pala -- workflow-check --strict
+      - run: npm run pala -- db init --strict
+      - run: npm run pala -- benchmark-refresh --dry-run
+      - run: npm run pala -- drift-check --strict
+      - run: npm run pala -- dashboard-truth-check --strict

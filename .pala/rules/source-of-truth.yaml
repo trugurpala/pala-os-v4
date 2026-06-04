@@ -1,0 +1,19 @@
+version: 1
+purpose: "Declare where Pala OS truth may come from."
+primary_sources:
+  - .pala/db/pala.sqlite
+  - .pala/state/*.json
+  - .pala/ledger/*.jsonl
+  - .pala/evidence/**
+  - docs/evidence/**
+dashboard_rule: "Frontend reads truth. It does not create truth."
+missing_data_states:
+  - Unknown
+  - Not checked
+  - Partial
+  - Blocked
+  - Manual verification required
+prohibited_sources:
+  - chat_memory_only
+  - agent_claim_without_evidence
+  - fake_green_dashboard_state

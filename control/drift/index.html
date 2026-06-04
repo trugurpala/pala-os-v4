@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pala OS Control - Drift</title>
+  <link rel="stylesheet" href="../control.css">
+  <script src="../control.js" defer></script>
+</head>
+<body data-pala-route="/control/drift" data-pala-source=".pala/db/pala.sqlite .pala/state .pala/ledger .pala/evidence docs/evidence" data-pala-snapshot=".pala/state/dashboard-state.json" data-pala-api="/api/state" data-pala-route-api="/api/route">
+  <div class="app-shell">
+    <aside>
+      <div class="brand">
+        <span class="brand-mark">P</span>
+        <div><strong>Pala OS</strong><small>Control Tower</small></div>
+      </div>
+      <nav aria-label="Primary"><a href="../overview/">Overview</a>
+        <a href="../evidence/">Evidence</a>
+        <a href="../evidence-exchange/">Evidence Exchange</a>
+        <a href="../decisions/">Decisions</a>
+        <a href="../decision-review/">Decision Review</a>
+        <a href="../quality-radar/">Quality Radar</a>
+        <a href="../sync/">Sync</a>
+        <a href="../push-readiness/">Push Readiness</a>
+        <a href="../references/">References</a>
+        <a href="../benchmarks/">Benchmarks</a>
+        <a href="../next-actions/">Next Actions</a></nav>
+      <div class="aside-foot">
+        <span class="read-only">READ ONLY</span>
+        <small>Frontend reads truth. It does not create truth.</small>
+      </div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">/control/drift</p>
+          <h1>Drift</h1>
+          <p class="core-line">Agent does the work. Pala OS verifies the work.</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="status" data-state-field="project-acceptance">Unknown</span>
+          <button type="button" id="refresh-state">Refresh</button>
+        </div>
+      </header>
+
+      <section class="truth-strip" aria-label="Current truth" aria-live="polite">
+        <div class="metric"><span>Project</span><strong data-state-field="project-acceptance">Unknown</strong></div>
+        <div class="metric"><span>Command</span><strong data-state-field="command-acceptance">Unknown</strong></div>
+        <div class="metric"><span>Risk</span><strong data-state-field="risk-level">Unknown</strong></div>
+        <div class="metric"><span>Updated</span><strong data-state-field="updated-at">Unknown</strong></div>
+      </section>
+
+      <section class="command-band">
+        <span>Current command</span>
+        <code data-state-field="current-command">Unknown</code>
+        <span class="status" data-state-field="command-status">Unknown</span>
+      </section>
+
+      <div class="workspace-grid">
+        <section class="panel">
+          <div class="section-heading"><h2>Blockers</h2><span data-state-field="blocker-count">Unknown</span></div>
+          <ul class="signal-list" id="blockers-list"><li>Unknown</li></ul>
+        </section>
+        <section class="panel">
+          <div class="section-heading"><h2>Runtime</h2><span data-state-field="agent-surface">Unknown</span></div>
+          <dl class="fact-grid">
+            <div><dt>Agent surface</dt><dd data-state-field="agent-surface">Unknown</dd></div>
+            <div><dt>Model</dt><dd data-state-field="model">Unknown</dd></div>
+            <div><dt>Effort</dt><dd data-state-field="effort">Unknown</dd></div>
+            <div><dt>Quality findings</dt><dd data-state-field="open-quality">Unknown</dd></div>
+          </dl>
+        </section>
+        <section class="panel">
+          <div class="section-heading"><h2>Latest evidence</h2><span data-state-field="run-status">Unknown</span></div>
+          <code class="path-value" data-state-field="latest-evidence">Unknown</code>
+          <dl class="fact-grid compact">
+            <div><dt>Decision</dt><dd data-state-field="latest-decision">Unknown</dd></div>
+            <div><dt>Sync</dt><dd data-state-field="sync-status">Unknown</dd></div>
+            <div><dt>Push</dt><dd data-state-field="push-status">Unknown</dd></div>
+          </dl>
+          <p class="decision-reason" data-state-field="latest-decision-reason">Unknown</p>
+        </section>
+        <section class="panel">
+          <div class="section-heading"><h2>Local DB</h2><span>SQLite</span></div>
+          <div class="count-grid" id="count-grid"><span>Unknown</span></div>
+        </section>
+      </div>
+      <section class="route-data-panel">
+        <div class="section-heading"><h2>Drift data</h2><span data-state-field="route-row-count">Unknown</span></div>
+        <div class="route-toolbar">
+          <label class="route-search" for="route-filter">
+            <span>Filter rows</span>
+            <input type="search" id="route-filter" autocomplete="off">
+          </label>
+          <div class="route-pager">
+            <span id="route-page-summary">Unknown</span>
+            <button type="button" class="icon-button" id="route-prev" title="Previous page" aria-label="Previous page">&larr;</button>
+            <button type="button" class="icon-button" id="route-next" title="Next page" aria-label="Next page">&rarr;</button>
+          </div>
+        </div>
+        <div class="route-summary" id="route-summary" hidden></div>
+        <div class="table-wrap" id="route-data"><p class="empty-state">Unknown</p></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

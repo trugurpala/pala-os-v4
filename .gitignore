@@ -1,0 +1,24 @@
+# Pala OS local/private runtime files
+.pala/db/*.sqlite
+.pala/db/*.sqlite-shm
+.pala/db/*.sqlite-wal
+.pala/evidence/raw/
+.pala/state/
+.pala/ledger/
+.pala/archive/
+.pala/private/
+.pala/secrets/
+
+# Node
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json

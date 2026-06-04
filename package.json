@@ -1,0 +1,22 @@
+{
+  "name": "pala-os-community-session-pack",
+  "version": "0.28.0",
+  "private": true,
+  "description": "Local-first control and evidence layer for AI/vibe coding agents.",
+  "type": "module",
+  "bin": {
+    "pala": "./src/cli.ts"
+  },
+  "scripts": {
+    "pala": "node --no-warnings=ExperimentalWarning ./src/cli.ts",
+    "panel": "node --no-warnings=ExperimentalWarning ./src/panel-server.ts",
+    "worker:smoke": "node --no-warnings=ExperimentalWarning ./src/worker.ts --smoke-check",
+    "check": "node --no-warnings=ExperimentalWarning --check ./src/cli.ts && node --no-warnings=ExperimentalWarning --test tests/*.test.ts",
+    "test": "node --no-warnings=ExperimentalWarning --test tests/*.test.ts",
+    "verify": "node --no-warnings=ExperimentalWarning ./src/cli.ts verify --strict"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT"
+}

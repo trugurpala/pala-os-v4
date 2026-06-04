@@ -1,0 +1,1 @@
+Open this folder as PROJECT_ROOT, read 00-CLAUDE-CODE-A-YAPISTIR-TEK-METIN.md, then implement Pala OS v28 in the exact phase order with local DB memory, decision engine, evidence, and no fake PASS.

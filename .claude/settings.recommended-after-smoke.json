@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "pala_note": "Copy/merge these hooks only after running node .claude/hooks/pretooluse-guard.mjs with sample JSON on this machine.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/pretooluse-guard.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

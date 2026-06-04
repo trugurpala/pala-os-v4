@@ -1,0 +1,31 @@
+version: 1
+purpose: "Benchmark lessons only; no copying."
+references:
+  - name: Claude Code official docs
+    category: runtime
+    lesson: "Memory is context; hooks/settings/permissions/tests are enforcement layers."
+    pala_decision: "Pala keeps CLI+DB+ledger+evidence as final authority."
+  - name: OpenHands
+    category: coding_agent
+    lesson: "Mature agent projects expose CLI, local GUI, SDK, cloud/enterprise, docs and community files."
+    pala_decision: "Pala does not compete as an agent; Pala controls and verifies agents."
+  - name: OpenCode
+    category: terminal_agent
+    lesson: "Developer UX benefits from TUI, sessions, SQLite, LSP and file change tracking."
+    pala_decision: "Pala uses SQLite/memory/evidence and can add terminal-friendly views later."
+  - name: Backstage
+    category: developer_portal
+    lesson: "Central catalog + docs-like-code creates order across services and tooling."
+    pala_decision: "Pala dashboard is a local control tower, not a decorative panel."
+  - name: Langfuse
+    category: token_cost_observability
+    lesson: "Token/cost should separate usage types and distinguish ingested vs inferred values."
+    pala_decision: "Pala separates exact/estimated/unknown usage with confidence."
+  - name: Helicone
+    category: observability_gateway
+    lesson: "LLM observability tracks cost, latency, quality, traces and sessions."
+    pala_decision: "Pala stores local run/command/evidence traces without requiring a cloud gateway."
+  - name: OpenSSF Scorecard
+    category: public_security
+    lesson: "Automated security heuristics are helpful but not definitive."
+    pala_decision: "Pala uses scorecard as one signal, not final truth."

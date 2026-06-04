@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  local-gates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm run check
+      - run: npm run pala -- admin-check --strict
+      - run: npm run pala -- worker-check --strict
+      - run: npm run pala -- workflow-check --strict
+      - run: npm run pala -- db init --strict
+      - run: npm run pala -- doctor --strict
+      - run: npm run pala -- decision-review --strict
+      - run: npm run pala -- quality-radar --strict
+      - run: npm run pala -- dashboard-truth-check --strict
+      - run: npm run pala -- benchmark-refresh --dry-run
+      - run: npm run pala -- drift-check --strict
+      - run: npm run pala -- verify

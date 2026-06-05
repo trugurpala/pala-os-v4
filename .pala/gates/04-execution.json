@@ -1,0 +1,11 @@
+{
+  "id": "execution",
+  "order": 4,
+  "name": "Agent Execution Gate",
+  "purpose": "Allow coding agents to execute only after applicable upstream gates pass.",
+  "applies_to": ["all"],
+  "depends_on": ["intake", "research", "figma-product"],
+  "ui_product_requires": ["figma-product"],
+  "pass_requires": ["changed_files_recorded", "agent_result_recorded"],
+  "evidence_ledger": ".pala/ledger/evidence.jsonl"
+}

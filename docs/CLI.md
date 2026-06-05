@@ -534,3 +534,24 @@ scan, all backups/replacements, and final scan; normal Pala ledger appends use
 the same bounded lock so a live append cannot be lost at replacement. Unsafe,
 changed, unreleasable, or stale locks block and are not automatically
 reclaimed.
+
+## Honest acceptance semantics
+
+`pala verify --strict` verifies Master Workflow infrastructure. It may return
+PASS while product execution or release authorization remains
+`approval_required`. Readiness and authorization are reported separately and
+never converted into a fake product or release PASS.
+
+The Master Workflow dashboard exposes `infrastructure_acceptance`,
+`product_workflow_status`, `release_readiness`, and `release_authorization`.
+Figma/Product and Release gates require explicit human approval evidence before
+their ledger status can become `passed`. Decision-engine `needs_approval` is
+displayed as the canonical gate status `approval_required`.
+
+Kernel bootstrap and ledger append verification derive their expected counts
+from the exported contract inventories in `src/lib/db.ts` and
+`src/lib/ledger.ts`; verification must not hardcode a hidden replacement count.
+Fresh clones bootstrap required local ledger files as empty JSONL files, with no
+fake PASS records. Runtime `.pala/ledger/*`, `.pala/state/*`,
+`.pala/evidence/raw/*`, and `.pala/evidence/*.md` files are local evidence only
+and are not commit artifacts.

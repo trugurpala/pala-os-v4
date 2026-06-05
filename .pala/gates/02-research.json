@@ -1,0 +1,10 @@
+{
+  "id": "research",
+  "order": 2,
+  "name": "Research Gate",
+  "purpose": "Require current sources and benchmark evidence when decisions depend on changing facts.",
+  "applies_to": ["all"],
+  "depends_on": ["intake"],
+  "pass_requires": ["research_requirement_decided", "current_sources_recorded_when_required"],
+  "evidence_ledger": ".pala/ledger/evidence.jsonl"
+}

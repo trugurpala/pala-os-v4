@@ -1,6 +1,7 @@
 import { buildEvidenceExchangePreview } from "./evidence-exchange.ts";
 import { buildReferenceRefreshPlan } from "./reference-radar.ts";
 import { buildDecisionReviewQueue } from "./decision-review.ts";
+import { inspectMasterWorkflow } from "./master-workflow.ts";
 
 const ROUTE_QUERIES = {
   overview: "SELECT goal, status, risk_level, evidence_path, started_at, ended_at FROM runs ORDER BY started_at DESC LIMIT 20",
@@ -192,7 +193,49 @@ function decisionReviewRouteData(db, options) {
   };
 }
 
+function masterWorkflowRouteData(options) {
+  const limit = boundedInteger(options.limit, DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE);
+  const offset = boundedInteger(options.offset, 0, 0, Number.MAX_SAFE_INTEGER);
+  const searchQuery = String(options.query || "").trim().toLowerCase().slice(0, 120);
+  const workflow = inspectMasterWorkflow();
+  const filteredRows = workflow.gate_states.map(normalizeRow).filter((row) => rowMatches(row, searchQuery));
+  const rows = filteredRows.slice(offset, offset + limit);
+  return {
+    status: workflow.status,
+    route: "master-workflow",
+    row_count: rows.length,
+    total_count: filteredRows.length,
+    total_count_exact: true,
+    limit,
+    offset,
+    query: searchQuery || null,
+    has_more: offset + rows.length < filteredRows.length,
+    scan_limit: workflow.contract.gate_count,
+    scan_truncated: false,
+    rows,
+    route_summary: {
+      current_gate: workflow.current_gate,
+      passed_gates: workflow.passed_gates,
+      blocked_gates: workflow.blocked_gates,
+      missing_evidence: workflow.missing_evidence,
+      token_cost_summary: workflow.token_cost_summary,
+      manual_verification_required_items: workflow.manual_verification_required_items,
+      approval_required_items: workflow.approval_required_items,
+      infrastructure_acceptance: workflow.infrastructure_acceptance,
+      product_workflow_status: workflow.product_workflow_status,
+      release_readiness: workflow.release_readiness,
+      release_authorization: workflow.release_authorization
+    },
+    truth_sources: workflow.truth_sources,
+    empty_state: rows.length === 0 ? "No master workflow gates" : null,
+    note: "Master Workflow reads fixed local ledger truth; missing evidence never becomes PASS."
+  };
+}
+
 export function panelRouteData(db, route, options = {}) {
+  if (route === "master-workflow") {
+    return masterWorkflowRouteData(options);
+  }
   if (route === "benchmarks") {
     return benchmarkRouteData(db, options);
   }

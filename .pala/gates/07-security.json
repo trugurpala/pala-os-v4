@@ -1,0 +1,10 @@
+{
+  "id": "security",
+  "order": 7,
+  "name": "Security Gate",
+  "purpose": "Require a risk-proportionate security decision and verification evidence.",
+  "applies_to": ["all"],
+  "depends_on": ["tests"],
+  "pass_requires": ["security_scope_decided", "security_result_recorded"],
+  "verification_ledger": ".pala/ledger/verification.jsonl"
+}

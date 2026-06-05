@@ -25,7 +25,7 @@ import {
 import { CONTROL_ROUTES, DASHBOARD_GENERATION_CONTRACT, dashboardState, generateDashboardRoutes } from "../src/lib/dashboard.ts";
 import { DECISION_RECORD_CONTRACT, assessGoal, recordDecision } from "../src/lib/decision-engine.ts";
 import { buildDecisionReviewQueue } from "../src/lib/decision-review.ts";
-import { DATABASE_PATH_INSPECTION_CONTRACT, DATABASE_SCHEMA_EXECUTION_CONTRACT, DECISIONS, KERNEL_BOOTSTRAP_CONTRACT, bootstrapKernel, ensureKernel, executeDatabaseSchema, inspectDatabasePath, inspectDatabaseSchema, migrateDatabase } from "../src/lib/db.ts";
+import { DATABASE_PATH_INSPECTION_CONTRACT, DATABASE_SCHEMA_EXECUTION_CONTRACT, DECISIONS, KERNEL_BOOTSTRAP_CONTRACT, KERNEL_DIRECTORY_PATHS, KERNEL_INITIALIZED_FILE_PATHS, KERNEL_PROTECTED_FILE_PATHS, KERNEL_REQUIRED_EMPTY_LEDGER_FILES, bootstrapKernel, ensureKernel, executeDatabaseSchema, inspectDatabasePath, inspectDatabaseSchema, migrateDatabase } from "../src/lib/db.ts";
 import { buildCompletionSummary } from "../src/lib/completion.ts";
 import { CLI_COMMAND_RECORD_CONTRACT, buildCliCommandRecord } from "../src/lib/cli-command.ts";
 import { CLI_FINALIZATION_CONTRACT, finalizeCliCommand } from "../src/lib/cli-finalization.ts";
@@ -34,7 +34,7 @@ import { CONTRACT_TEXT_READ_CONTRACT, createContractTextReader } from "../src/li
 import { DRIFT_TEXT_READ_CONTRACT, inspectDrift, inspectVersionContract } from "../src/lib/drift.ts";
 import { LATEST_EVIDENCE_CONTRACT, PUBLIC_EVIDENCE_WRITE_CONTRACT, RAW_EVIDENCE_WRITE_CONTRACT, latestEvidence, writeEvidence, writePublicEvidence } from "../src/lib/evidence.ts";
 import { EVIDENCE_EXCHANGE_CONTRACT, EVIDENCE_EXCHANGE_EXPORT_WRITE_CONTRACT, EVIDENCE_EXCHANGE_FILE_HANDLE_CAPABILITY, EVIDENCE_EXCHANGE_IMPORT_PREFLIGHT_CAPABILITY, EVIDENCE_EXCHANGE_IMPORT_READINESS_CAPABILITY, EVIDENCE_EXCHANGE_MIGRATION_READINESS_CAPABILITY, EVIDENCE_EXCHANGE_TARGET_PATH_CAPABILITY, assertEvidenceExchangeContentDigest, buildEvidenceExchangePreview, buildSanitizedEvidenceExport, checkEvidenceExchangeCompleteness, compareEvidenceExchangeTarget, evidenceExchangeByteBudget, evidenceExchangeCompatibility, evidenceExchangeContentDigest, inspectEvidenceImport, inspectEvidenceMigration, planEvidenceExchangeImport, planEvidenceExchangeMigration, planEvidenceExchangeMigrationReadiness, validateEvidenceExchange, writeSanitizedEvidenceExport } from "../src/lib/evidence-exchange.ts";
-import { LEDGER_APPEND_CONTRACT, appendLedger } from "../src/lib/ledger.ts";
+import { LEDGER_APPEND_CONTRACT, LEDGER_FILES, appendLedger } from "../src/lib/ledger.ts";
 import { LEDGER_MUTATION_LOCK_CONTRACT } from "../src/lib/ledger-lock.ts";
 import { LEDGER_REPAIR_WRITE_CONTRACT, LEDGER_SAFETY_SCAN_CONTRACT, inspectLedgerSafety, repairLedgerSafety } from "../src/lib/ledger-safety.ts";
 import { INTERACTIVE_MISTAKE_CONTRACT, collectInteractiveMistake } from "../src/lib/interactive-memory.ts";
@@ -74,6 +74,7 @@ import { STATE_FILE_IO_CONTRACT, readBoundedStateJson, writeBoundedStateJson } f
 import { gitStatusLines, inspectGitHead, inspectGitStatus, inspectSync, SYNC_OBSERVATION_CONTRACT } from "../src/lib/sync.ts";
 import { tokenSummary } from "../src/lib/token-economy.ts";
 import { WORKFLOW_INSPECTION_CONTRACT, inspectWorkflowContracts, inspectWorkflowMutations } from "../src/lib/workflow-contract.ts";
+import { MASTER_GATE_PATHS, MASTER_LEDGER_PATHS, MASTER_WORKFLOW_INSPECTION_CONTRACT, effectiveGateStatus, hasExplicitHumanApproval, inspectMasterWorkflow } from "../src/lib/master-workflow.ts";
 import { WORKER_PACKAGE_INSPECTION_CONTRACT, inspectWorkerPackage } from "../src/worker.ts";
 
 function runCli(args) {
@@ -3073,6 +3074,64 @@ test("workflow contracts keep CI local, strict, and non-publishing", async () =>
   assert.equal(JSON.parse(result.stdout).acceptance_status, "PASS");
 });
 
+test("master workflow enforces gate, evidence, Figma, and ledger-backed dashboard contracts", async () => {
+  const workflow = inspectMasterWorkflow();
+  assert.equal(workflow.status, "safe_to_execute", JSON.stringify(workflow.blockers));
+  assert.equal(MASTER_WORKFLOW_INSPECTION_CONTRACT.gate_count, 10);
+  assert.equal(MASTER_WORKFLOW_INSPECTION_CONTRACT.ledger_count, 4);
+  assert.equal(workflow.checks.every((check) => check.ok), true);
+  assert.equal(workflow.truth_sources.includes(".pala/ledger/evidence.jsonl"), true);
+  assert.equal(workflow.truth_sources.includes(".pala/ledger/token-cost.jsonl"), true);
+  assert.equal(workflow.gate_states.length, 10);
+  assert.equal(workflow.gate_states.some((gate) => gate.gate_id === workflow.current_gate), true);
+  assert.equal(workflow.infrastructure_acceptance, "PASS");
+  assert.equal(workflow.figma_product_status, "approval_required");
+  assert.equal(workflow.product_workflow_status, "blocked");
+  assert.equal(workflow.release_authorization, "approval_required");
+  assert.equal(workflow.gate_states.find((gate) => gate.gate_id === "tests").status, "passed");
+  assert.equal(workflow.gate_states.find((gate) => gate.gate_id === "security").status, "passed");
+  assert.equal(workflow.missing_evidence.length <= 10, true);
+  assert.equal(CONTROL_ROUTES.includes("master-workflow"), true);
+
+  const route = panelRouteData(null, "master-workflow");
+  assert.equal(route.route, "master-workflow");
+  assert.equal(route.rows.length, 10);
+  assert.equal(route.route_summary.current_gate, workflow.current_gate);
+  assert.equal(route.route_summary.infrastructure_acceptance, "PASS");
+  assert.equal(route.route_summary.release_authorization, "approval_required");
+  assert.deepEqual(route.truth_sources, MASTER_LEDGER_PATHS);
+
+  const result = await runCli(["workflow:check", "--strict"]);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).acceptance_status, "PASS");
+});
+
+test("approval-gated workflow states cannot pass without explicit human approval evidence", () => {
+  const visualPlanOnly = {
+    status: "passed",
+    evidence_path: ".pala/evidence/raw/visual-plan.log"
+  };
+  assert.equal(hasExplicitHumanApproval(visualPlanOnly), false);
+  assert.equal(effectiveGateStatus("figma-product", visualPlanOnly), "approval_required");
+  assert.equal(effectiveGateStatus("release", visualPlanOnly), "approval_required");
+  assert.equal(effectiveGateStatus("figma-product", { status: "needs_approval" }), "approval_required");
+
+  const humanApproved = {
+    status: "passed",
+    evidence_path: ".pala/evidence/raw/visual-plan.log",
+    approval: {
+      approved: true,
+      approver_type: "human",
+      approved_by: "Ugur",
+      evidence_path: ".pala/evidence/raw/human-approval.log"
+    }
+  };
+  assert.equal(hasExplicitHumanApproval(humanApproved), true);
+  assert.equal(effectiveGateStatus("figma-product", humanApproved), "passed");
+  assert.equal(effectiveGateStatus("release", humanApproved), "passed");
+  assert.equal(hasExplicitHumanApproval({ ...humanApproved, approval: { ...humanApproved.approval, approver_type: "agent" } }), false);
+});
+
 test("workflow mutation scan rejects real release actions without flagging readiness words", () => {
   const safe = inspectWorkflowMutations([
     "on:",
@@ -3149,13 +3208,17 @@ test("mini-kernel and dashboard phase-contract files exist", () => {
     ".pala/rules/token-economy-policy.md",
     ".pala/rules/current-source-reference-law.md",
     ".pala/rules/operator-console-usage-policy.md",
+    ".pala/master-workflow.json",
+    ...MASTER_GATE_PATHS,
     ".pala/ledger/events.jsonl",
     ".pala/ledger/handoffs.jsonl",
     ".pala/ledger/decisions.jsonl",
     ".pala/ledger/mistakes.jsonl",
     ".pala/ledger/token-economy.jsonl",
     ".pala/ledger/reference-refresh.jsonl",
+    ...MASTER_LEDGER_PATHS,
     "control/overview/index.html",
+    "control/master-workflow/index.html",
     "control/evidence/index.html",
     "control/drift/index.html",
     "control/sync/index.html",
@@ -3216,7 +3279,8 @@ test("ledger append is allowlisted, bounded, contained, and single-handle", () =
   assert.equal(fs.readFileSync(path.join(blockedLockRoot, ".pala", "ledger", "events.jsonl"), "utf8"), "");
 
   assert.equal(LEDGER_APPEND_CONTRACT.policy, "fixed_allowlisted_project_contained_single_handle_append");
-  assert.equal(LEDGER_APPEND_CONTRACT.allowed_file_count, 6);
+  assert.equal(LEDGER_APPEND_CONTRACT.allowed_file_count, LEDGER_FILES.length);
+  assert.equal(LEDGER_APPEND_CONTRACT.allowed_files, LEDGER_FILES);
   assert.equal(LEDGER_APPEND_CONTRACT.max_record_bytes, 1_000_000);
   assert.equal(LEDGER_APPEND_CONTRACT.concurrent_mutation_policy, "bounded_fixed_create_only_lock_serialized_ledger_mutations");
   assert.equal(LEDGER_APPEND_CONTRACT.max_mutation_lock_attempts, 100);
@@ -5184,7 +5248,7 @@ test("dashboard route generation is project-contained, atomic, and blocks juncti
 
   assert.equal(DASHBOARD_GENERATION_CONTRACT.policy, "bounded_fixed_project_contained_atomic_dashboard_generation");
   assert.equal(DASHBOARD_GENERATION_CONTRACT.max_file_bytes, 1_000_000);
-  assert.equal(DASHBOARD_GENERATION_CONTRACT.max_reported_unsafe_paths, 70);
+  assert.equal(DASHBOARD_GENERATION_CONTRACT.max_reported_unsafe_paths, 2 * CONTROL_ROUTES.length + 4);
   assert.equal(DASHBOARD_GENERATION_CONTRACT.concurrent_directory_creation_policy, "rechecked_eexist_tolerant");
   assert.equal(DASHBOARD_GENERATION_CONTRACT.concurrent_generation_policy, "rechecked_transient_atomic_replace_retry");
   assert.equal(DASHBOARD_GENERATION_CONTRACT.max_atomic_replace_attempts, 20);
@@ -5877,6 +5941,16 @@ test("kernel bootstrap is fixed, project-contained, create-only, and junction-sa
   assert.equal(created.writes_performed, true);
   assert.equal(fs.existsSync(path.join(projectRoot, ".pala", "ledger", "events.jsonl")), true);
   assert.equal(fs.existsSync(path.join(projectRoot, ".pala", "state", "project-state.json")), true);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.directory_count, KERNEL_DIRECTORY_PATHS.length);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.initialized_file_count, KERNEL_INITIALIZED_FILE_PATHS.length);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.protected_file_count, KERNEL_PROTECTED_FILE_PATHS.length);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.directory_paths, KERNEL_DIRECTORY_PATHS);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.initialized_file_paths, KERNEL_INITIALIZED_FILE_PATHS);
+  assert.equal(KERNEL_BOOTSTRAP_CONTRACT.protected_file_paths, KERNEL_PROTECTED_FILE_PATHS);
+  for (const ledgerFile of KERNEL_REQUIRED_EMPTY_LEDGER_FILES) {
+    const ledgerText = fs.readFileSync(path.join(projectRoot, ".pala", "ledger", ledgerFile), "utf8");
+    assert.equal(ledgerText, "");
+  }
 
   fs.writeFileSync(path.join(projectRoot, ".pala", "state", "project-state.json"), "sentinel\n", "utf8");
   const repeated = bootstrapKernel({ projectRoot });
@@ -6407,11 +6481,13 @@ test("volatile state, ledgers, and archives are gitignored runtime files", () =>
   for (const file of [
     ".pala/state/dashboard-state.json",
     ".pala/ledger/events.jsonl",
+    ".pala/evidence/runtime-log.md",
     ".pala/archive/example.log"
   ]) {
     assert.equal(spawnSync("git", ["check-ignore", "--quiet", file], { cwd: process.cwd() }).status, 0, file);
   }
   assert.notEqual(spawnSync("git", ["check-ignore", "--quiet", ".pala/memory/mistake-registry.jsonl"], { cwd: process.cwd() }).status, 0);
+  assert.notEqual(spawnSync("git", ["check-ignore", "--quiet", "docs/evidence/public-summary.md"], { cwd: process.cwd() }).status, 0);
 });
 
 test("final verify reports evidence blockers without internal schema errors", async () => {

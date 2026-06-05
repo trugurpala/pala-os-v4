@@ -1,0 +1,10 @@
+{
+  "id": "token-economy",
+  "order": 8,
+  "name": "Token Economy Gate",
+  "purpose": "Record exact, estimated, or unknown token and cost truth with confidence.",
+  "applies_to": ["all"],
+  "depends_on": ["security"],
+  "pass_requires": ["usage_status", "confidence", "cost_status"],
+  "token_cost_ledger": ".pala/ledger/token-cost.jsonl"
+}

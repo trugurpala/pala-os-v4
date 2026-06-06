@@ -361,6 +361,7 @@ export function recordDecision(db, input, options = {}) {
   const writeDecisionEvidence = options.writeEvidence || writeEvidence;
   const appendDecisionLedger = options.appendLedger || appendLedger;
   const insertDecision = options.insertDecision || insertDecisionRecord;
+  const skipLedgerAppend = options.skipLedgerAppend === true;
   const persistence = decisionPersistence();
   let evidencePath = null;
   let ledgerPath = null;
@@ -382,26 +383,30 @@ export function recordDecision(db, input, options = {}) {
     markPersistenceFailure(payload, persistence, "decision_evidence_write_outcome_unknown");
   }
 
-  try {
-    ledgerPath = confirmedDecisionLedgerPath(appendDecisionLedger("decisions", {
-      id,
-      run_id: input.runId,
-      decision_type: safeDecisionType,
-      decision: payload.decision,
-      reason: payload.reason,
-      risk_level: payload.risk_level,
-      evidence_path: evidencePath,
-      persistence: {
-        status: "pending_database_insert",
-        evidence_write_outcome: persistence.steps.evidence_write.outcome,
-        payload_exposed_on_failure: false
-      }
-    }));
-    if (!ledgerPath) throw new Error("decision_ledger_path_not_confirmed");
-    persistence.steps.ledger_append = persistenceStep("confirmed");
-  } catch {
-    persistence.steps.ledger_append = persistenceStep("unknown_after_attempt");
-    markPersistenceFailure(payload, persistence, "decision_ledger_append_outcome_unknown");
+  if (skipLedgerAppend) {
+    persistence.steps.ledger_append = persistenceStep("not_attempted");
+  } else {
+    try {
+      ledgerPath = confirmedDecisionLedgerPath(appendDecisionLedger("decisions", {
+        id,
+        run_id: input.runId,
+        decision_type: safeDecisionType,
+        decision: payload.decision,
+        reason: payload.reason,
+        risk_level: payload.risk_level,
+        evidence_path: evidencePath,
+        persistence: {
+          status: "pending_database_insert",
+          evidence_write_outcome: persistence.steps.evidence_write.outcome,
+          payload_exposed_on_failure: false
+        }
+      }));
+      if (!ledgerPath) throw new Error("decision_ledger_path_not_confirmed");
+      persistence.steps.ledger_append = persistenceStep("confirmed");
+    } catch {
+      persistence.steps.ledger_append = persistenceStep("unknown_after_attempt");
+      markPersistenceFailure(payload, persistence, "decision_ledger_append_outcome_unknown");
+    }
   }
 
   try {

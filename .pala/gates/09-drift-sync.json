@@ -1,0 +1,10 @@
+{
+  "id": "drift-sync",
+  "order": 9,
+  "name": "Drift Sync Gate",
+  "purpose": "Keep code, docs, dashboard, state, and evidence aligned.",
+  "applies_to": ["all"],
+  "depends_on": ["token-economy"],
+  "pass_requires": ["drift_result", "sync_result", "evidence_paths"],
+  "verification_ledger": ".pala/ledger/verification.jsonl"
+}

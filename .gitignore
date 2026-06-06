@@ -2,6 +2,7 @@
 .pala/db/*.sqlite
 .pala/db/*.sqlite-shm
 .pala/db/*.sqlite-wal
+.pala/evidence/*.md
 .pala/evidence/raw/
 .pala/state/
 .pala/ledger/

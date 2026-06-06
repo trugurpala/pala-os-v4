@@ -1,0 +1,14 @@
+{
+  "id": "figma-product",
+  "order": 3,
+  "name": "Figma/Product Gate",
+  "purpose": "Block UI/Product implementation until visual planning and approval evidence exists.",
+  "applies_to": ["ui", "product"],
+  "depends_on": ["research"],
+  "approval_required_for_pass": true,
+  "approval_status": "approval_required",
+  "approval_evidence_requires": ["approved", "approver_type=human", "approved_by", "evidence_path"],
+  "pass_requires": ["visual_plan", "frames", "components", "responsive_states", "copy", "approval_evidence"],
+  "non_applicable_requires": ["task_classification_evidence"],
+  "evidence_ledger": ".pala/ledger/evidence.jsonl"
+}

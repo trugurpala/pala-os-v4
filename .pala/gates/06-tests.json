@@ -1,0 +1,10 @@
+{
+  "id": "tests",
+  "order": 6,
+  "name": "Test/Typecheck Gate",
+  "purpose": "Record test and typecheck outcomes without converting missing checks into PASS.",
+  "applies_to": ["all"],
+  "depends_on": ["evidence"],
+  "pass_requires": ["test_result", "typecheck_result", "exit_codes", "evidence_paths"],
+  "verification_ledger": ".pala/ledger/verification.jsonl"
+}

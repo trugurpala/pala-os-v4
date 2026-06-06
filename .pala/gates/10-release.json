@@ -1,0 +1,14 @@
+{
+  "id": "release",
+  "order": 10,
+  "name": "Release/Badge Gate",
+  "purpose": "Allow release or badge status only after every required gate has verified evidence.",
+  "applies_to": ["all"],
+  "depends_on": ["drift-sync"],
+  "approval_required_for_pass": true,
+  "approval_status": "approval_required",
+  "approval_evidence_requires": ["approved", "approver_type=human", "approved_by", "evidence_path"],
+  "done_requires_evidence": true,
+  "pass_requires": ["all_required_gates_passed", "release_decision_recorded", "badge_evidence_recorded"],
+  "verification_ledger": ".pala/ledger/verification.jsonl"
+}

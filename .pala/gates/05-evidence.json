@@ -1,0 +1,11 @@
+{
+  "id": "evidence",
+  "order": 5,
+  "name": "Evidence Gate",
+  "purpose": "Prevent done status without command output, exit code, changed files, and evidence path.",
+  "applies_to": ["all"],
+  "depends_on": ["execution"],
+  "done_requires_evidence": true,
+  "pass_requires": ["command_output", "exit_code", "changed_files", "evidence_path"],
+  "evidence_ledger": ".pala/ledger/evidence.jsonl"
+}

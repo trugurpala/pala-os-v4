@@ -10,6 +10,7 @@ const TRANSIENT_ATOMIC_REPLACE_ERROR_CODES = new Set(["EACCES", "EBUSY", "EPERM"
 
 export const CONTROL_ROUTES = [
   "overview",
+  "master-workflow",
   "evidence",
   "evidence-exchange",
   "commands",
@@ -69,7 +70,7 @@ function title(route) {
 
 function page(route) {
   const routeTitle = title(route);
-  const primaryRoutes = ["overview", "evidence", "evidence-exchange", "decisions", "decision-review", "quality-radar", "sync", "push-readiness", "references", "benchmarks", "next-actions"];
+  const primaryRoutes = ["overview", "master-workflow", "evidence", "evidence-exchange", "decisions", "decision-review", "quality-radar", "sync", "push-readiness", "references", "benchmarks", "next-actions"];
   const navigation = primaryRoutes.map((item) => {
     const active = item === route ? " aria-current=\"page\"" : "";
     return `<a href="../${item}/"${active}>${title(item)}</a>`;
@@ -227,7 +228,7 @@ function renderRouteSummary(summary) {
     const label = document.createElement("span");
     const strong = document.createElement("strong");
     label.textContent = name.replace(/_/g, " ");
-    strong.textContent = valueOrUnknown(value);
+    strong.textContent = value && typeof value === "object" ? JSON.stringify(value) : valueOrUnknown(value);
     item.append(label, strong);
     container.appendChild(item);
   }

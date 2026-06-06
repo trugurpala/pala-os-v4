@@ -7,12 +7,15 @@ import { inspectRepoPath } from "./repo-scan.ts";
 import { LEDGER_MUTATION_LOCK_CONTRACT, withLedgerMutationLock } from "./ledger-lock.ts";
 
 const NOFOLLOW_FLAG = typeof fs.constants.O_NOFOLLOW === "number" ? fs.constants.O_NOFOLLOW : 0;
-const LEDGER_FILES = Object.freeze([
+export const LEDGER_FILES = Object.freeze([
   "events.jsonl",
   "handoffs.jsonl",
   "decisions.jsonl",
   "mistakes.jsonl",
   "token-economy.jsonl",
+  "evidence.jsonl",
+  "token-cost.jsonl",
+  "verification.jsonl",
   "reference-refresh.jsonl"
 ]);
 const LEDGER_FILE_SET = new Set(LEDGER_FILES);
@@ -20,6 +23,7 @@ const LEDGER_FILE_SET = new Set(LEDGER_FILES);
 export const LEDGER_APPEND_CONTRACT = Object.freeze({
   policy: "fixed_allowlisted_project_contained_single_handle_append",
   allowed_file_count: LEDGER_FILES.length,
+  allowed_files: LEDGER_FILES,
   max_record_bytes: 1_000_000,
   path_metadata_policy: "realpath_contained_symlink_free_path_metadata_only",
   concurrent_mutation_policy: LEDGER_MUTATION_LOCK_CONTRACT.policy,

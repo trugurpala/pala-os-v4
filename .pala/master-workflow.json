@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "name": "Pala Master Workflow",
+  "positioning": "Pala OS is a local control tower above coding agents.",
+  "current_gate_policy": "first_required_gate_without_verified_pass",
+  "task_rules": {
+    "ui_product_requires_figma_gate": true,
+    "done_requires_evidence": true,
+    "approval_gated_pass_requires_human_evidence": true,
+    "dashboard_truth_source": ".pala/ledger"
+  },
+  "gates": [
+    { "id": "intake", "order": 1, "path": ".pala/gates/01-intake.json", "required": true },
+    { "id": "research", "order": 2, "path": ".pala/gates/02-research.json", "required": true },
+    { "id": "figma-product", "order": 3, "path": ".pala/gates/03-figma-product.json", "required": true },
+    { "id": "execution", "order": 4, "path": ".pala/gates/04-execution.json", "required": true },
+    { "id": "evidence", "order": 5, "path": ".pala/gates/05-evidence.json", "required": true },
+    { "id": "tests", "order": 6, "path": ".pala/gates/06-tests.json", "required": true },
+    { "id": "security", "order": 7, "path": ".pala/gates/07-security.json", "required": true },
+    { "id": "token-economy", "order": 8, "path": ".pala/gates/08-token-economy.json", "required": true },
+    { "id": "drift-sync", "order": 9, "path": ".pala/gates/09-drift-sync.json", "required": true },
+    { "id": "release", "order": 10, "path": ".pala/gates/10-release.json", "required": true }
+  ],
+  "ledgers": {
+    "evidence": ".pala/ledger/evidence.jsonl",
+    "decisions": ".pala/ledger/decisions.jsonl",
+    "token_cost": ".pala/ledger/token-cost.jsonl",
+    "verification": ".pala/ledger/verification.jsonl"
+  }
+}

@@ -2,6 +2,7 @@ import path from "node:path";
 import { dbStatus, nowIso } from "./db.ts";
 import { PATHS } from "./paths.ts";
 import { STATE_FILE_IO_CONTRACT, readBoundedStateJson, writeBoundedStateJson } from "./state-file.ts";
+import { inspectMasterWorkflow } from "./master-workflow.ts";
 
 function first(db, sql) {
   return db.prepare(sql).get() || null;
@@ -164,7 +165,11 @@ export function buildOperationalSnapshot(db, input = {}) {
     finalDecision: latestFinalDecision?.decision,
     finalFailures: latestFinalInputs.failures
   });
-  const projectAcceptance = latestFinalDecision?.decision === "pass_allowed" && projectBlockers.length === 0 ? "PASS" : "PARTIAL";
+  const infrastructureBlockers = Array.isArray(latestFinalInputs.failures)
+    ? latestFinalInputs.failures.flatMap((failure) => blockerIdsForVerificationFailure(failure, latestPushBlockers))
+    : [];
+  const projectAcceptance = latestFinalDecision?.decision === "pass_allowed" && infrastructureBlockers.length === 0 ? "PASS" : "PARTIAL";
+  const masterWorkflow = inspectMasterWorkflow();
 
   return {
     schema_version: 1,
@@ -178,6 +183,10 @@ export function buildOperationalSnapshot(db, input = {}) {
     command_acceptance_status: input.completion?.acceptance_status || "PARTIAL",
     project_acceptance_status: projectAcceptance,
     acceptance_status: projectAcceptance,
+    infrastructure_acceptance: projectAcceptance,
+    product_workflow_status: masterWorkflow.product_workflow_status,
+    release_readiness: masterWorkflow.release_readiness,
+    release_authorization: masterWorkflow.release_authorization,
     risk_summary: input.completion?.risk_summary || { level: "unknown", unresolved_blocker_count: 0, unresolved_blockers: [] },
     project_risk_summary: {
       level: projectBlockers.length > 0 ? "medium" : "low",
@@ -195,7 +204,7 @@ export function buildOperationalSnapshot(db, input = {}) {
     latest_push: latestPush ? { ...latestPush, blockers: latestPushBlockers } : null,
     model_effort: latestModel || { observed_model: "unknown", observed_effort: "unknown", source: "unknown", confidence: "low", agent_surface: "unknown", runtime_evidence_path: null },
     open_quality_findings: openQualityFindings,
-    missing_data_states: ["Unknown", "Not checked", "Partial", "Blocked", "Manual verification required"]
+    missing_data_states: ["Unknown", "Not checked", "Partial", "Blocked", "Manual verification required", "Approval required"]
   };
 }
 

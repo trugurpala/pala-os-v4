@@ -1,0 +1,9 @@
+{
+  "id": "intake",
+  "order": 1,
+  "name": "Intake Gate",
+  "purpose": "Classify the task, scope, risk, approvals, and acceptance criteria.",
+  "applies_to": ["all"],
+  "pass_requires": ["goal_recorded", "task_type_recorded", "risk_recorded", "acceptance_criteria_recorded"],
+  "evidence_ledger": ".pala/ledger/evidence.jsonl"
+}

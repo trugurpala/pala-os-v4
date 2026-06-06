@@ -51,7 +51,7 @@ function renderRouteSummary(summary) {
     const label = document.createElement("span");
     const strong = document.createElement("strong");
     label.textContent = name.replace(/_/g, " ");
-    strong.textContent = valueOrUnknown(value);
+    strong.textContent = value && typeof value === "object" ? JSON.stringify(value) : valueOrUnknown(value);
     item.append(label, strong);
     container.appendChild(item);
   }

@@ -588,3 +588,16 @@ due-soon/overdue escalation status.
 Frontend reads truth. It does not create truth.
 
 If data is missing, the dashboard must show `Unknown`, `Not checked`, `Partial`, `Blocked`, or `Manual verification required`.
+
+Master Workflow acceptance is multi-dimensional. Infrastructure verification,
+product workflow execution, release readiness, and release authorization are
+separate truth values. Pending human approval does not fail infrastructure
+verification, but it cannot satisfy an approval-gated PASS or authorize an
+external write. The read-only Master Workflow route derives these values from
+fixed local gate definitions and ledger records.
+
+Kernel and ledger contracts expose their own inventories, and verification
+checks the declared inventory lengths instead of hidden numeric expectations.
+Fresh-clone ledger bootstrap creates missing required JSONL files empty; runtime
+verification evidence remains local and gitignored unless it is deliberately
+sanitized into `docs/evidence/*`.

@@ -24,9 +24,10 @@ export const DOCS_EVIDENCE_DIR = path.join(PROJECT_ROOT, "docs", "evidence");
 
 export const DECISIONS = ["blocked", "needs_approval", "dry_run_only", "safe_local_write", "manual_verification_required", "pass_allowed"];
 
-const KERNEL_DIRECTORY_PATHS = [
+export const KERNEL_DIRECTORY_PATHS = Object.freeze([
   ".pala",
   ".pala/rules",
+  ".pala/gates",
   ".pala/state",
   ".pala/ledger",
   ".pala/memory",
@@ -37,32 +38,45 @@ const KERNEL_DIRECTORY_PATHS = [
   ".pala/db",
   "docs",
   "docs/evidence"
-];
-const KERNEL_LEDGER_FILES = [
+]);
+export const KERNEL_LEDGER_FILES = Object.freeze([
   "events.jsonl",
   "handoffs.jsonl",
   "decisions.jsonl",
   "mistakes.jsonl",
   "token-economy.jsonl",
+  "evidence.jsonl",
+  "token-cost.jsonl",
+  "verification.jsonl",
   "reference-refresh.jsonl"
-];
-const KERNEL_INITIALIZED_FILE_PATHS = [
+]);
+export const KERNEL_REQUIRED_EMPTY_LEDGER_FILES = Object.freeze([
+  "evidence.jsonl",
+  "token-cost.jsonl",
+  "verification.jsonl"
+]);
+export const KERNEL_INITIALIZED_FILE_PATHS = Object.freeze([
   ...KERNEL_LEDGER_FILES.map((file) => `.pala/ledger/${file}`),
   ".pala/state/project-state.json",
   ".pala/state/control-tower-state.json",
   ".pala/state/benchmark-state.json"
-];
-const KERNEL_PROTECTED_FILE_PATHS = [
+]);
+export const KERNEL_PROTECTED_FILE_PATHS = Object.freeze([
   ...KERNEL_INITIALIZED_FILE_PATHS,
   ".pala/db/pala.sqlite",
   ".pala/memory/mistake-registry.jsonl"
-];
+]);
 
 export const KERNEL_BOOTSTRAP_CONTRACT = Object.freeze({
   policy: "fixed_project_contained_create_only_kernel_bootstrap",
   directory_count: KERNEL_DIRECTORY_PATHS.length,
   initialized_file_count: KERNEL_INITIALIZED_FILE_PATHS.length,
   protected_file_count: KERNEL_PROTECTED_FILE_PATHS.length,
+  directory_paths: KERNEL_DIRECTORY_PATHS,
+  initialized_file_paths: KERNEL_INITIALIZED_FILE_PATHS,
+  protected_file_paths: KERNEL_PROTECTED_FILE_PATHS,
+  ledger_files: KERNEL_LEDGER_FILES,
+  required_empty_ledger_files: KERNEL_REQUIRED_EMPTY_LEDGER_FILES,
   max_initialized_file_bytes: 1_000_000,
   path_metadata_policy: "realpath_contained_symlink_free_path_metadata_only",
   concurrent_directory_creation_policy: "rechecked_eexist_tolerant",

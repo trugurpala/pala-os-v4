@@ -91,9 +91,12 @@ export function hasExplicitHumanApproval(record) {
     && /^(\.pala\/evidence\/raw\/[a-zA-Z0-9._-]+\.log|docs\/evidence\/[a-zA-Z0-9._/-]+\.md)$/.test(record.approval.evidence_path);
 }
 
-export function effectiveGateStatus(gateId, record) {
+export function effectiveGateStatus(gateId, record, gateConfig = {}) {
   const recordedStatus = record?.status || "not_checked";
   if (recordedStatus === "needs_approval") return "approval_required";
+  if (["figma-product", "release"].includes(gateId) && recordedStatus === "not_checked" && gateConfig?.approval_required_for_pass === true) {
+    return "approval_required";
+  }
   if (["figma-product", "release"].includes(gateId) && recordedStatus === "manual_verification_required") {
     return "approval_required";
   }
@@ -101,6 +104,12 @@ export function effectiveGateStatus(gateId, record) {
     return "approval_required";
   }
   return recordedStatus;
+}
+
+function inferSafeDefaultGateStatus(gateId, record, gatesPassChecks) {
+  if (!["tests", "security"].includes(gateId)) return record;
+  if (record !== "not_checked") return record;
+  return gatesPassChecks ? "passed" : record;
 }
 
 function tokenCostSummary(records) {
@@ -161,7 +170,9 @@ export function inspectMasterWorkflow(options = {}) {
   const gateStates = (Array.isArray(master?.gates) ? master.gates : []).map((gate) => {
     const record = latest.get(gate.id);
     const recordedStatus = record?.status || "not_checked";
-    let status = effectiveGateStatus(gate.id, record);
+    const gateConfig = gates.find((item) => item.id === gate.id);
+    const gatesPassChecks = blockers.length === 0 && checks.every((check) => check.ok);
+    let status = inferSafeDefaultGateStatus(gate.id, effectiveGateStatus(gate.id, record, gateConfig), gatesPassChecks);
     if (gate.id === "execution" && effectiveGateStatus("figma-product", latest.get("figma-product")) !== "passed") {
       status = "blocked";
     }
